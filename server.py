@@ -21,20 +21,18 @@ def make_handler(command_template, association):
 
             if data:
                 queue[client].append(data)
-                print("Received chunk{} from {}".format(data.decode(), client))
+                #print("Received chunk{} from {}".format(data.decode(), client))
+                print("Received chunk from {}".format(client))
             else:
                 whole_message = b''.join(queue[client])
-                message = whole_message.decode()
-                print("Complete data {} from {}".format(message, client))
+                del queue[client] # to free space
 
-                del queue[client]
                 do_print(whole_message)
 
-                writer.write(b'Request processed, bye')
+                writer.write(b'Request processed, bye') # ack back to the client
                 await writer.drain()
 
                 break
-                
 
 
     def do_print(data):
@@ -43,11 +41,13 @@ def make_handler(command_template, association):
             temp.flush()
             command = command_template.format(filename=temp.name, printer_name=printer_name)
             if port == 9100:
-                subprocess.run(['cat', temp.name])
+                #subprocess.run(['cat', temp.name])
+                pass
             else:
                 subprocess.run(command.split(' '))
         
-        print('Print command executed: {}'.format(command))
+        #print('Print command executed: {}'.format(command))
+        print('Print executed')
 
     return handler
 
