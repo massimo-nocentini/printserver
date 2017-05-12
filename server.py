@@ -1,5 +1,5 @@
 
-
+# a simple reworking of https://docs.python.org/3/library/asyncio-stream.html
 
 import socketserver, json, tempfile, subprocess
 from collections import defaultdict
@@ -13,7 +13,7 @@ def make_handler(command_template, association):
     queue = defaultdict(list)
 
     async def handler(reader, writer):
-        
+
         while True:
 
             data = await reader.read(1024)
@@ -21,22 +21,21 @@ def make_handler(command_template, association):
 
             if data:
                 queue[client].append(data)
+                print("Received chunk{} from {}".format(data.decode(), client))
             else:
                 whole_message = b''.join(queue[client])
                 message = whole_message.decode()
-                print("Received {} from {}".format(message, client))
+                print("Complete data {} from {}".format(message, client))
 
                 del queue[client]
                 do_print(whole_message)
-                
-                break
 
-        print('out of loop')
-        try:
-            writer.write(b'Request processed, bye')
-            await writer.drain()
-        except (OSError, ConnectionError):
-            pass
+                writer.write(b'Request processed, bye')
+                await writer.drain()
+
+                break
+                
+
 
     def do_print(data):
         with tempfile.NamedTemporaryFile() as temp:
@@ -54,15 +53,16 @@ def make_handler(command_template, association):
 
 #________________________________________________________________________ 
 
-def make_queues(loop, HOST="127.0.0.1"):
+def make_queues(loop):
 
     with open('printers_conf.json', 'r') as conf_file:
         conf = json.load(conf_file)
         command_template = conf['print_command']
+        host = conf['host']
         associations = {line['port']:line['printer'] for line in conf['queues']}
         print('Server configuration:\n{}'.format(json.dumps(conf, indent=4)))
 
-    return asyncio.gather(*[asyncio.start_server(make_handler(command_template, (port, printer)), HOST, port, loop=loop) 
+    return asyncio.gather(*[asyncio.start_server(make_handler(command_template, (port, printer)), host, port, loop=loop) 
                           for port, printer in associations.items()])
 
 if __name__ == "__main__":

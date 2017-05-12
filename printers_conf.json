@@ -3,6 +3,7 @@
     "stackoverflow_comment":"http://stackoverflow.com/questions/619158/adobe-reader-command-line-reference",
     "official_doc_comment":"http://www.robvanderwoude.com/commandlineswitches.php#Acrobat",
 
+    "host":"127.0.0.1",
     "print_command":"AcroRd32.exe /n /t '{filename}' '{printer_name}'",
     "queues": [
         { "port": 9100, "printer": "a printer name" },

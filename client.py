@@ -12,10 +12,10 @@ async def tcp_echo_client(message, loop):
 
     print('Send: %r' % message)
     writer.write(message.encode())
+    writer.write_eof()
     await writer.drain()
-    writer.close()
 
-    data = await reader.read()
+    data = await reader.read(1024)
     print('Received: %r' % data.decode())
 
     print('Close the socket')
