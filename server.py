@@ -1,7 +1,7 @@
 
 # a simple reworking of https://docs.python.org/3/library/asyncio-stream.html
 
-import socketserver, json, tempfile, subprocess
+import socketserver, json, tempfile, subprocess, os
 from collections import defaultdict
 import asyncio
 from contextlib import suppress
@@ -21,32 +21,29 @@ def make_handler(command_template, association):
 
             if data:
                 queue[client].append(data)
-                #print("Received chunk{} from {}".format(data.decode(), client))
                 print("Received chunk from {}".format(client))
             else:
                 whole_message = b''.join(queue[client])
                 del queue[client] # to free space
 
                 do_print(whole_message)
-
-                writer.write(b'Request processed, bye') # ack back to the client
-                await writer.drain()
+                writer.write_eof()
 
                 break
 
 
     def do_print(data):
-        with tempfile.NamedTemporaryFile() as temp:
+    
+        filename = tempfile.NamedTemporaryFile(prefix=(os.path.abspath('.'))+'/temp/').name
+        with open(filename, "wb") as temp:
             temp.write(data)
             temp.flush()
-            command = command_template.format(filename=temp.name, printer_name=printer_name)
-            if port == 9100:
-                #subprocess.run(['cat', temp.name])
-                pass
-            else:
-                subprocess.run(command.split(' '))
+            print("TEMP:" + temp.name)
+        command = command_template.format(filename=filename, printer_name=printer_name)
+        print(command)
+        subprocess.run(command)
         
-        #print('Print command executed: {}'.format(command))
+        print('Print command executed: {}'.format(command))
         print('Print executed')
 
     return handler
